@@ -9,18 +9,18 @@ As part of `Deliverable ⓵ Development deployment: JWT Pizza`, start up the app
 | View home page                                      | home.tsx           | none              | none         |
 | Register new user<br/>(t@jwt.com, pw: test)         | register.tsx       | "/api/auth","POST"| "INSERT INTO user (name, email, password) VALUES (?, ?, ?)" "INSERT INTO userRole (userId, role, objectId) VALUES (?, ?, ?)"            |
 | Login new user<br/>(t@jwt.com, pw: test)            | login.tsx          |'/api/auth', 'PUT' |INSERT INTO auth (token, userId) VALUES (?, ?)`              |
-| Order pizza                                         | menu.tsx           |'/api/order' 'POST'|INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now()) INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)             |
-| Verify pizza                                        | payment.tsx        |'/api/order/verify', 'POST'|none  |
+| Order pizza                                         | menu.tsx           |'/api/order' 'POST'|INSERT INTO dinerOrder (dinerId, franchiseId, storeId, date) VALUES (?, ?, ?, now()) INSERT INTO orderItem (orderId, menuId, description, price) VALUES (?, ?, ?, ?)   "SELECT id, franchiseId, storeId, date FROM dinerOrder WHERE dinerId=? LIMIT ${offset},${config.db.listPerPage}`, [user.id] "        |
+| Verify pizza                                        | payment.tsx        |'/api/order/verify', 'POST'|"SELECT id, menuId, description, price FROM orderItem WHERE orderId=?`, [order.id]" |
 | View profile page                                   | app.tsx            | none              | none         |
-| View franchise<br/>(as diner)                       | franchiseDashboard.tsx| path: string, method: string = 'GET', body?: any| none|
-| Logout                                              | logout.tsx         | 'user'            | none         |
+| View franchise<br/>(as diner)                       | franchiseDashboard.tsx| path: string, method: string = 'GET', body?: any| "SELECT objectId FROM userRole WHERE role='franchisee' AND userId=?`, [userId]"|
+| Logout                                              | logout.tsx         | '/api/auth', 'DELETE'|"DELETE FROM auth WHERE token=?"|
 | View About page                                     | about.tsx          | none              | none         |
 | View History page                                   | history.tsx        | none              | none         |
 | Login as franchisee<br/>(f@jwt.com, pw: franchisee) | login.tsx          | "/api/auth","POST"| "INSERT INTO auth (token, userId) VALUES (?, ?)"           |
 | View franchise<br/>(as franchisee)                  | view.tsx           | "/api/franchise"  | "SELECT id, name FROM franchise", "SELECT id, name FROM store WHERE franchiseId=?"    |
-| Create a store                                      | createStore.tsx    | "/api/franchise/${franchise.id}/store`, "POST"  | "INSERT INTO store (franchiseId, name) VALUES (?, ?)" |
-| Close a store                                       | closeStore.tsx     |  "/api/franchise/${franchise.id}/store/${store.id}", "DELETE"   | "DELETE FROM store WHERE franchiseId=? AND id=?" |
+| Create a store                                      | createStore.tsx    | "/api/franchise/${franchise.id}/store`, "POST"  |  `INSERT INTO store (franchiseId, name) VALUES (?, ?)`, [franchiseId, store.name]|
+| Close a store                                       | closeStore.tsx     |  "/api/franchise/${franchise.id}/store/${store.id}", "DELETE"   | `DELETE FROM store WHERE franchiseId=? AND id=?`, [franchiseId, storeId]|
 | Login as admin<br/>(a@jwt.com, pw: admin)           | login.tsx          | '/api/auth', 'PUT'| "INSERT INTO auth (token, userId) VALUES (?, ?)"  |
 | View Admin page                                     | adminDashboard.tsx | none              |  none        |
-| Create a franchise for t@jwt.com                    | createFranchise.tsx| "/api/franchise", "POST", franchise | "INSERT INTO store (franchiseId, name) VALUES (?, ?)", [franchiseId, store.name]|
-| Close the franchise for t@jwt.com                   | closeFranchise.tsx | "/api/franchise/${franchise.id}, "DELETE"| "DELETE FROM store WHERE franchiseId=? AND id=?", [franchiseId, storeId]|
+| Create a franchise for t@jwt.com                    | createFranchise.tsx| "/api/franchise", "POST", franchise | "INSERT INTO store (franchiseId, name) VALUES (?, ?)"|
+| Close the franchise for t@jwt.com                   | closeFranchise.tsx | "/api/franchise/${franchise.id}, "DELETE"| "DELETE FROM store WHERE franchiseId=? AND id=?"|
