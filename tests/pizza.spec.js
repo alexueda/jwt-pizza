@@ -544,7 +544,6 @@ test('Franchise (UI)', async ({ page }) => {
     await page.getByRole('textbox', { name: 'Email address' }).fill('fake@jwt.com');
     await page.getByRole('textbox', { name: 'Password' }).fill('fake');
     await page.getByRole('button', { name: 'Register' }).click();
-  
     await page.getByRole('link', { name: 'f', exact: true }).click();
     await expect(page.getByRole('heading')).toContainText('Your pizza kitchen');
     await expect(page.getByRole('main')).toContainText('name:');
