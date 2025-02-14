@@ -7,19 +7,15 @@ test('home page', async ({ page }) => {
 });
 
 test('buy pizza with login (API)', async ({ page }) => {
-  // version.json のモック
   await page.route('**/version.json', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify({ version: '20000101.000000' }),
     });
   });
-
-  // /api/auth のモック（メソッドに応じたレスポンスを返す）
   await page.route('**/api/auth', async (route) => {
     const method = route.request().method();
     if (method === 'POST') {
-      // Register 時の認証
       const response = {
         user: {
           name: 'alison honey',
@@ -34,7 +30,6 @@ test('buy pizza with login (API)', async ({ page }) => {
         body: JSON.stringify(response),
       });
     } else if (method === 'DELETE') {
-      // Logout のモック
       const response = {
         message: 'logout successful',
       };
@@ -43,7 +38,6 @@ test('buy pizza with login (API)', async ({ page }) => {
         body: JSON.stringify(response),
       });
     } else if (method === 'PUT') {
-      // Login のモック
       const response = {
         user: {
           id: 74,
@@ -58,12 +52,10 @@ test('buy pizza with login (API)', async ({ page }) => {
         body: JSON.stringify(response),
       });
     } else {
-      // 他のメソッドの場合はそのまま通す
       await route.continue();
     }
   });
 
-  // /api/order/menu のモック
   await page.route('**/api/order/menu', async (route) => {
     const menuResponse = [
       {
@@ -108,7 +100,6 @@ test('buy pizza with login (API)', async ({ page }) => {
     });
   });
 
-  // /api/franchise のモック
   await page.route('**/api/franchise', async (route) => {
     const franchiseResponse = [
       {
@@ -128,10 +119,7 @@ test('buy pizza with login (API)', async ({ page }) => {
     });
   });
 
-  // テスト開始：各操作を実行
   await page.goto('http://localhost:5173/');
-
-  // Register フロー
   await page.getByRole('link', { name: 'Login' }).click();
   await page.getByRole('link', { name: 'Register' }).click();
   await page.getByRole('textbox', { name: 'Full name' }).fill('alison honey');
@@ -140,18 +128,14 @@ test('buy pizza with login (API)', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Password' }).click();
   await page.getByRole('textbox', { name: 'Password' }).fill('abc');
   await page.getByRole('button', { name: 'Register' }).click();
-
-  // Logout フロー
   await page.getByRole('link', { name: 'Logout' }).click();
 
-  // Login フロー
   await page.getByRole('link', { name: 'Login' }).click();
   await page.getByRole('textbox', { name: 'Email address' }).fill('alison@gmail.com');
   await page.getByRole('textbox', { name: 'Password' }).click();
   await page.getByRole('textbox', { name: 'Password' }).fill('abc');
   await page.getByRole('button', { name: 'Login' }).click();
 
-  // Order フロー
   await page.getByRole('link', { name: 'Order' }).click();
   await page.getByRole('combobox').selectOption('1');
   await page.getByRole('link', { name: 'Image Description Pepperoni' }).click();
@@ -161,7 +145,6 @@ test('buy pizza with login (API)', async ({ page }) => {
 
 
 test('admin (UI)', async ({ page }) => {
-  // Mock version.json
   await page.route('**/version.json', (route) => {
     route.fulfill({
       status: 200,
@@ -170,7 +153,6 @@ test('admin (UI)', async ({ page }) => {
     });
   });
 
-  // Mock PUT /api/auth for login
   await page.route('**/api/auth', async (route, request) => {
     if (request.method() === 'PUT') {
       route.fulfill({
@@ -192,7 +174,6 @@ test('admin (UI)', async ({ page }) => {
     }
   });
 
-  // Mock GET /api/order (order history)
   await page.route('**/api/order', (route) => {
     route.fulfill({
       status: 200,
@@ -311,7 +292,6 @@ test('admin (UI)', async ({ page }) => {
     }
   });
 
-  // Now run your UI actions.
   await page.goto('http://localhost:5173/');
   await page.getByRole('link', { name: 'Login' }).click();
   await page.getByRole('textbox', { name: 'Email address' }).fill('a@jwt.com');
@@ -326,7 +306,6 @@ test('admin (UI)', async ({ page }) => {
   await page.getByRole('textbox', { name: 'franchisee admin email' }).click();
   await page.getByRole('textbox', { name: 'franchisee admin email' }).fill('apple@gmail.com');
   await page.getByRole('button', { name: 'Create' }).click();
-  // Optionally, if the UI requires a second click on Create (for example, a confirmation)
   await page.getByRole('button', { name: 'Create' }).click();
   await page.getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('link', { name: 'Franchise' }).click();
@@ -340,9 +319,6 @@ test('admin (UI)', async ({ page }) => {
 
 
 test('Franchise (UI)', async ({ page }) => {
-  // --- MOCK ENDPOINTS ---
-
-  // version.json
   await page.route('**/version.json', (route) => {
     route.fulfill({
       status: 200,
@@ -351,10 +327,8 @@ test('Franchise (UI)', async ({ page }) => {
     });
   });
 
-  // Login: PUT /api/auth for franchisee credentials
   await page.route('**/api/auth', async (route, request) => {
     if (request.method() === 'PUT') {
-      // If login credentials match franchisee, return a franchisee user
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -363,7 +337,6 @@ test('Franchise (UI)', async ({ page }) => {
             id: 2,
             name: "Franchise User",
             email: "f@jwt.com",
-            // Include an objectId (franchise id) for franchisee users
             roles: [{ role: "franchisee", objectId: "1" }],
           },
           token: "fake-franchisee-token",
@@ -374,10 +347,8 @@ test('Franchise (UI)', async ({ page }) => {
     }
   });
 
-  // GET /api/franchise: Return the franchise details including stores
   await page.route('**/api/franchise', async (route, request) => {
     if (request.method() === 'GET') {
-      // Return a franchise with two stores: SLC and OREM
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -387,7 +358,6 @@ test('Franchise (UI)', async ({ page }) => {
             name: "Franchise A",
             admins: [{ name: "Franchise Admin" }],
             stores: [
-              // We'll simulate that after store creation, these stores exist.
               { id: "3", name: "SLC", totalRevenue: 0 },
               { id: "4", name: "OREM", totalRevenue: 0 }
             ]
@@ -395,10 +365,7 @@ test('Franchise (UI)', async ({ page }) => {
         ]),
       });
     } else if (request.method() === 'POST') {
-      // POST for store creation
-      // (In a real app, you'd inspect the request body. Here we return a success response.)
       const postData = await request.postDataJSON();
-      // For example, if the store name is SLC, return id "3", else "4".
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -412,8 +379,6 @@ test('Franchise (UI)', async ({ page }) => {
       route.continue();
     }
   });
-
-  // GET /api/menu: Return a sample menu with a few pizzas
   await page.route('**/api/menu', (route) => {
     route.fulfill({
       status: 200,
@@ -425,8 +390,6 @@ test('Franchise (UI)', async ({ page }) => {
       ]),
     });
   });
-
-  // POST /api/order: Simulate a successful order checkout
   await page.route('**/api/order', async (route, request) => {
     if (request.method() === 'POST') {
       const orderRequest = await request.postDataJSON();
@@ -442,8 +405,6 @@ test('Franchise (UI)', async ({ page }) => {
       route.continue();
     }
   });
-
-  // GET /api/logout: Simulate logging out
   await page.route('**/api/logout', (route) => {
     route.fulfill({
       status: 200,
@@ -451,24 +412,427 @@ test('Franchise (UI)', async ({ page }) => {
       body: JSON.stringify({ message: "Logged out" }),
     });
   });
-
-  // --- UI ACTIONS ---
-
   await page.goto('http://localhost:5173/');
   await page.getByRole('link', { name: 'Login' }).click();
   await page.getByRole('textbox', { name: 'Email address' }).fill('f@jwt.com');
   await page.getByRole('textbox', { name: 'Password' }).click();
   await page.getByRole('textbox', { name: 'Password' }).fill('franchisee');
   await page.getByRole('button', { name: 'Login' }).click();
-
-  // Click the Franchise link (assumed to be inside a Global navigation container)
   await page.getByLabel('Global').getByRole('link', { name: 'Franchise' }).click();
-
-  // Go to the Order page and select a store from the combobox
   await page.getByRole('link', { name: 'Order' }).click();
-
-  // Finally, log out
   await page.getByRole('link', { name: 'Logout' }).click();
 });
 
 
+  test('purchase with login', async ({ page }) => {
+    await page.route('*/**/api/order/menu', async (route) => {
+      const menuRes = [
+        { id: 1, title: 'Veggie', image: 'pizza1.png', price: 0.0038, description: 'A garden of delight' },
+        { id: 2, title: 'Pepperoni', image: 'pizza2.png', price: 0.0042, description: 'Spicy treat' },
+      ];
+      expect(route.request().method()).toBe('GET');
+      await route.fulfill({ json: menuRes });
+    });
+  
+    await page.route('*/**/api/franchise', async (route) => {
+      const franchiseRes = [
+        {
+          id: 2,
+          name: 'LotaPizza',
+          stores: [
+            { id: 4, name: 'Lehi' },
+            { id: 5, name: 'Springville' },
+            { id: 6, name: 'American Fork' },
+          ],
+        },
+        { id: 3, name: 'PizzaCorp', stores: [{ id: 7, name: 'Spanish Fork' }] },
+        { id: 4, name: 'topSpot', stores: [] },
+      ];
+      expect(route.request().method()).toBe('GET');
+      await route.fulfill({ json: franchiseRes });
+    });
+  
+    await page.route('*/**/api/auth', async (route) => {
+      const loginReq = { email: 'd@jwt.com', password: 'a' };
+      const loginRes = { user: { id: 3, name: 'Kai Chen', email: 'd@jwt.com', roles: [{ role: 'diner' }] }, token: 'abcdef' };
+      expect(route.request().method()).toBe('PUT');
+      expect(route.request().postDataJSON()).toMatchObject(loginReq);
+      await route.fulfill({ json: loginRes });
+    });
+  
+    await page.route('*/**/api/order', async (route) => {
+      const orderReq = {
+        items: [
+          { menuId: 1, description: 'Veggie', price: 0.0038 },
+          { menuId: 2, description: 'Pepperoni', price: 0.0042 },
+        ],
+        storeId: '4',
+        franchiseId: 2,
+      };
+      const orderRes = {
+        order: {
+          items: [
+            { menuId: 1, description: 'Veggie', price: 0.0038 },
+            { menuId: 2, description: 'Pepperoni', price: 0.0042 },
+          ],
+          storeId: '4',
+          franchiseId: 2,
+          id: 23,
+        },
+        jwt: 'eyJpYXQ',
+      };
+      expect(route.request().method()).toBe('POST');
+      expect(route.request().postDataJSON()).toMatchObject(orderReq);
+      await route.fulfill({ json: orderRes });
+    });
+  
+    await page.goto('/');
+  
+    await page.getByRole('button', { name: 'Order now' }).click();
+    await expect(page.locator('h2')).toContainText('Awesome is a click away');
+    await page.getByRole('combobox').selectOption('4');
+    await page.getByRole('link', { name: 'Image Description Veggie A' }).click();
+    await page.getByRole('link', { name: 'Image Description Pepperoni' }).click();
+    await expect(page.locator('form')).toContainText('Selected pizzas: 2');
+    await page.getByRole('button', { name: 'Checkout' }).click();
+
+    await page.getByPlaceholder('Email address').click();
+    await page.getByPlaceholder('Email address').fill('d@jwt.com');
+    await page.getByPlaceholder('Email address').press('Tab');
+    await page.getByPlaceholder('Password').fill('a');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await expect(page.getByRole('main')).toContainText('Send me those 2 pizzas right now!');
+    await expect(page.locator('tbody')).toContainText('Veggie');
+    await expect(page.locator('tbody')).toContainText('Pepperoni');
+    await expect(page.locator('tfoot')).toContainText('0.008 ₿');
+    await page.getByRole('button', { name: 'Pay now' }).click();
+  
+    await expect(page.getByText('0.008')).toBeVisible();
+  });
+
+  test('register new user', async ({ page }) => {
+    await page.route('*/**/api/auth', async (route) => {
+      const requestData = await route.request().postDataJSON();
+      
+      const mockResponse = {
+        user: {
+          id: 100,
+          name: 'fakename',
+          email: 'fake@jwt.com',
+          roles: [{ role: 'diner' }]
+        },
+        token: 'fake'
+      };
+  
+      if (route.request().method() === 'POST') {
+        expect(requestData).toMatchObject({
+          name: 'fakename',
+          email: 'fake@jwt.com',
+          password: 'fake'
+        });
+  
+        await route.fulfill({ json: mockResponse });
+      } else {
+        await route.continue();
+      }
+    });
+  
+    await page.goto('http://localhost:5173/');
+    
+    await page.getByRole('link', { name: 'Register' }).click();
+    await page.getByRole('textbox', { name: 'Full name' }).fill('fakename');
+    await page.getByRole('textbox', { name: 'Email address' }).fill('fake@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).fill('fake');
+    await page.getByRole('button', { name: 'Register' }).click();
+  
+    await page.getByRole('link', { name: 'f', exact: true }).click();
+    await expect(page.getByRole('heading')).toContainText('Your pizza kitchen');
+    await expect(page.getByRole('main')).toContainText('name:');
+    await expect(page.getByRole('main')).toContainText('fake');
+    await expect(page.getByRole('main')).toContainText('email:');
+    await expect(page.getByRole('main')).toContainText('fake@jwt.com');
+    await expect(page.getByRole('main')).toContainText('role:');
+    await expect(page.getByRole('main')).toContainText('diner');
+    await expect(page.getByRole('main')).toContainText('How have you lived this long without having a pizza? Buy one now!');
+    await page.getByRole('link', { name: 'Buy one' }).click();
+  });
+
+test('franchise create and delete as admin', async ({ page }) => {
+    await page.route('**/version.json', async route => {
+        await route.fulfill({
+            status: 200,
+            headers: {
+                'Access-Control-Allow-Origin': '*',
+                'Cache-Control': 'no-cache',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                version: "20000101.000000"
+            })
+        });
+    });
+
+    await page.route('**/api/auth', async route => {
+        await route.fulfill({
+            status: 200,
+            headers: {
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+                'Access-Control-Allow-Origin': 'http://localhost:5173',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "user": {
+                    "id": 100,
+                    "name": "testadmin",
+                    "email": "testadmin@test.com",
+                    "roles": [
+                        {
+                            "role": "admin"
+                        },
+                        {
+                            "objectId": 10,
+                            "role": "franchisee"
+                        },
+                    ]
+                },
+                "token": "testadmin"
+            })
+        });
+    });
+
+    let isFirstGet = true;
+
+    await page.route('**/api/franchise', async route => {
+        const method = route.request().method();
+        
+        if (method === 'GET') {
+            if (isFirstGet) {
+                await route.fulfill({
+                    status: 200,
+                    headers: {
+                        'Access-Control-Allow-Credentials': 'true',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+                        'Access-Control-Allow-Origin': 'http://localhost:5173',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify([
+                        {
+                            "id": 20,
+                            "name": "testfranchise",
+                            "admins": [
+                                {
+                                    "id": 1,
+                                    "name": "testadmin",
+                                    "email": "testadmin@test.com"
+                                }
+                            ],
+                            "stores": []
+                        },
+                        {
+                            "id": 16,
+                            "name": "kitty",
+                            "admins": [
+                                {
+                                    "id": 1,
+                                    "name": "testadmin",
+                                    "email": "testadmin@test.com"
+                                }
+                            ],
+                            "stores": []
+                        }
+                    ])
+                });
+                isFirstGet = false;
+            } else {
+                await route.fulfill({
+                    status: 200,
+                    headers: {
+                        'Access-Control-Allow-Credentials': 'true',
+                        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+                        'Access-Control-Allow-Origin': 'http://localhost:5173',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify([
+                        {
+                            "id": 21,
+                            "name": "mikan",
+                            "admins": [
+                                {
+                                    "id": 100,
+                                    "name": "testadmin",
+                                    "email": "testadmin@test.com"
+                                }
+                            ],
+                            "stores": []
+                        },
+                        {
+                            "id": 20,
+                            "name": "testfranchise",
+                            "admins": [
+                                {
+                                    "id": 1,
+                                    "name": "testadmin",
+                                    "email": "testadmin@test.com"
+                                }
+                            ],
+                            "stores": []
+                        },
+                        {
+                            "id": 16,
+                            "name": "kitty",
+                            "admins": [
+                                {
+                                    "id": 1,
+                                    "name": "testadmin",
+                                    "email": "testadmin@test.com"
+                                }
+                            ],
+                            "stores": []
+                        }
+                    ])
+                });
+            }
+        } else if (method === 'POST') {
+            await route.fulfill({
+                status: 200,
+                headers: {
+                    'Access-Control-Allow-Credentials': 'true',
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+                    'Access-Control-Allow-Origin': 'http://localhost:5173',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "name": "mikan",
+                    "admins": [
+                        {
+                            "email": "testadmin@test.com",
+                            "id": 100,
+                            "name": "testadmin"
+                        }
+                    ],
+                    "id": 21
+                })
+            });
+        }
+    });
+
+    await page.route('**/api/franchise/21', async route => {
+        await route.fulfill({
+            status: 200,
+            headers: {
+                'Access-Control-Allow-Credentials': 'true',
+                'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+                'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE',
+                'Access-Control-Allow-Origin': 'http://localhost:5173',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                "message": "franchise deleted"
+            })
+        });
+    });
+
+    await page.goto('http://localhost:5173/');
+    await page.getByRole('link', { name: 'Login' }).click();
+    await page.getByRole('textbox', { name: 'Email address' }).fill('testadmin@test.com');
+    await page.getByRole('textbox', { name: 'Password' }).click();
+    await page.getByRole('textbox', { name: 'Password' }).fill('admin');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.getByRole('link', { name: 'Admin' }).click();
+    await page.getByRole('button', { name: 'Add Franchise' }).click();
+    await page.getByRole('textbox', { name: 'franchise name' }).click();
+    await page.getByRole('textbox', { name: 'franchise name' }).fill('mikan');
+    await page.getByRole('textbox', { name: 'franchisee admin email' }).click();
+    await page.getByRole('textbox', { name: 'franchisee admin email' }).fill('testadmin@jwt.com');
+    await page.getByRole('button', { name: 'Create' }).click();
+    await page.getByRole('row', { name: 'mikan testadmin Close' }).getByRole('button').click();
+    await expect(page.getByRole('heading')).toContainText('Sorry to see you go');
+    await expect(page.getByRole('list')).toContainText('close-franchise');
+    await page.getByRole('button', { name: 'Close' }).click();
+});
+
+test('create a franchise as an admin', async ({ page }) => {
+    await page.route('*/**/api/auth', async (route) => {
+        const requestData = await route.request().postDataJSON();
+        const mockResponse = {
+            user: {
+                id: 100,
+                name: 'notfake',
+                email: 'notfake@jwt.com',
+                roles: [{ role: 'admin' }]
+            },
+            token: 'notfake'
+        };
+
+        if (route.request().method() === 'PUT') {
+            expect(requestData).toMatchObject({
+                email: 'notfake@jwt.com',
+                password: 'notfake'
+            });
+            await route.fulfill({ json: mockResponse });
+        } else {
+            await route.continue();
+        }
+    });
+
+    await page.route('**/api/franchises', async (route) => {
+        const requestData = await route.request().postDataJSON();
+        const mockFranchiseResponse = {
+            id: 1,
+            name: 'UVU',
+            adminEmail: 'notfake@jwt.com',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+
+        if (route.request().method() === 'POST') {
+            expect(requestData).toMatchObject({
+                name: 'notfake',
+                adminEmail: 'notfake@jwt.com'
+            });
+            await route.fulfill({ json: mockFranchiseResponse });
+        } else if (route.request().method() === 'GET') {
+            await route.fulfill({ json: [mockFranchiseResponse] });
+        } else {
+            await route.continue();
+        }
+    });
+
+    await page.goto('http://localhost:5173/');
+    await page.getByRole('link', { name: 'Login' }).click();
+    await expect(page.getByRole('heading')).toContainText('Welcome back');
+    await page.getByRole('textbox', { name: 'Email address' }).fill('notfake@jwt.com');
+    await page.getByRole('textbox', { name: 'Password' }).fill('notfake');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await expect(page.getByRole('list')).toContainText('home');
+    await page.getByText('The web\'s best pizza', { exact: true }).click();
+    await expect(page.getByRole('heading')).toContainText('The web\'s best pizza');
+    await expect(page.locator('#navbar-dark')).toContainText('Admin');
+    await expect(page.getByLabel('Global')).toContainText('n');
+    await page.getByRole('link', { name: 'n', exact: true }).click();
+    await expect(page.getByRole('heading')).toContainText('Your pizza kitchen');
+    await expect(page.getByRole('main')).toContainText('notfake');
+    await expect(page.getByRole('main')).toContainText('notfake@jwt.com');
+    await expect(page.getByRole('main')).toContainText('admin');
+    await page.getByRole('link', { name: 'Admin' }).click();
+    await expect(page.getByRole('heading')).toContainText('Mama Ricci\'s kitchen');
+    await expect(page.locator('thead')).toContainText('Franchise');
+    await expect(page.locator('thead')).toContainText('Franchisee');
+    await expect(page.locator('thead')).toContainText('Store');
+    await expect(page.locator('thead')).toContainText('Revenue');
+    await expect(page.locator('thead')).toContainText('Action');
+    await expect(page.getByRole('main')).toContainText('Add Franchise');
+    await page.getByRole('button', { name: 'Add Franchise' }).click();
+    await expect(page.getByRole('list')).toContainText('create-franchise');
+    await expect(page.getByRole('heading')).toContainText('Create franchise');
+    await expect(page.locator('form')).toContainText('Want to create franchise?');
+    await page.getByRole('textbox', { name: 'franchise name' }).fill('UVU');
+    await page.getByRole('textbox', { name: 'franchisee admin email' }).fill('notfake@jwt.com');
+    await expect(page.locator('form')).toContainText('Create');
+    await page.getByRole('button', { name: 'Create' }).click();
+});
