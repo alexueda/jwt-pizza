@@ -16,7 +16,7 @@ In this class, we learned to use a much better approach—**each person forks th
 
 Here’s a **good example** of the improved workflow:
 
-![Good Example: Fork and branch workflow](/good-collaboration.png)
+![Good Example: Fork and branch workflow](good-collaboration.png)
 
 Each teammate now works in their own forked repository, creates branches and opens a pull request back to the main repo. This allows for code review, discussion, and automated testing before merging into the `main` branch.
 
